@@ -1,0 +1,36 @@
+# A/B 运行环境：WSL 内共享 venv ~/venvs/gsb-temple（Python 3.12.14）
+# 本文件只是版本记录。运行时不要 pip install、不要联网，解释器统一用：
+#   ~/venvs/gsb-temple/bin/python -m pytest tests/ -q
+# 出题方创建该 venv 的命令（仅记录，运行侧不执行）：
+#   ~/venvs/base/bin/python -m venv ~/venvs/gsb-temple
+#   ~/venvs/gsb-temple/bin/python -m pip install fastapi==0.115.0 SQLAlchemy==2.0.35 \
+#       pydantic==2.9.2 pydantic-settings==2.5.2 python-dotenv==1.0.1 Markdown==3.7 \
+#       Jinja2==3.1.4 openai==1.51.0 httpx==0.27.2 pytest==8.3.3 pytest-asyncio==0.24.0
+# 那个 venv 是三道题共用的，里面的包比本裁剪范围需要的多；下面只列本题真正用到的闭包。
+
+# 直接依赖（本裁剪范围内代码 import 到的）
+Markdown==3.7              # document_service.py 顶层 `import markdown`
+pydantic-settings==2.5.2   # backend/config.py
+python-dotenv==1.0.1       # pydantic-settings 读 .env 用
+
+# 测试
+pytest==8.3.3
+
+# 传递依赖（随上面几项一起装好的）
+pydantic==2.9.2
+pydantic_core==2.23.4
+annotated-types==0.8.0
+typing_extensions==4.16.0
+iniconfig==2.3.0
+packaging==26.3
+pluggy==1.6.0
+
+# 注意：
+# - Markdown 3.7 本身没有第三方依赖（共享 venv 里的 MarkupSafe/Jinja2 是别的题带的，本题用不到）。
+# - document_service.py 顶层还 import 了 os / datetime / typing / smtplib / email.mime / email.header，
+#   全是标准库，已可用。
+# - EmailService.send_email 会真的去连 SMTP（smtplib.SMTP_SSL）。默认 SMTP_USER 是空串，
+#   所以默认配置下它在第一个 if 就返回「邮件服务未配置」，不碰网络。要测它只能替身掉
+#   smtplib.SMTP_SSL，不许 bind 真实端口、不许联网。
+# - 没有装 uvicorn / email-validator / pyannote.audio / whisper / torch，也不允许安装。
+# - 不要设置 OPENAI_API_KEY。
